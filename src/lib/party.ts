@@ -42,12 +42,21 @@ export function createPartyClient({ room, userId, onStroke, onCursor }: PartyCli
     })
 
     socket.addEventListener('message', (event) => {
+        if (typeof event.data !== 'string') return
+        if (!event.data.trim()) return
+
         try {
-            const message: PartyMessage = JSON.parse(event.data)
+            const jsonStart = event.data.indexOf('{')
+            if (jsonStart === -1) return
+
+            const json = event.data.slice(jsonStart)
+
+
+            const message: PartyMessage = JSON.parse(json)
             if (message.type === 'stroke') onStroke(message.stroke);
             if (message.type === 'cursor') onCursor(message)
         } catch (e) {
-            console.error('Failed to send party message', e)
+            console.error('[party] Failed to parse incoming message', event.data, e)
         }
     })
 
