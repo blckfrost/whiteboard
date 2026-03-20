@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
-	import { getCanvasPoint } from '$lib/canvas';
+	import { onDestroy, onMount } from 'svelte';
+	import { generateId, getCanvasPoint, redrawAll, renderStroke } from '$lib/canvas';
 	import Divider from '$lib/components/divider.svelte';
-	import type { Point } from '../../types';
+	import type { Point, Stroke } from '../../types';
+	import { history } from '$lib/history';
 
 	const room = $page.params.room;
 
@@ -14,12 +15,47 @@
 	let currentPoints: Point[] = [];
 
 	let color = '#c8f04a';
+	let brushSize = 3;
 	const palette = ['#c8f04a', '#f0ede6', '#60a5fa', '#f87171', '#fb923c', '#a78bfa', '#34d399'];
+
+	let unsubStrokes = history.strokes.subscribe((strokes) => {
+		if (ctx) redrawAll(ctx, strokes);
+	});
+
+	onMount(() => {
+		ctx = canvas.getContext('2d');
+		resizeCanvas();
+
+		window.addEventListener('resize', resizeCanvas);
+	});
+
+	onDestroy(() => {
+		unsubStrokes();
+		window.removeEventListener('resize', resizeCanvas);
+	});
 
 	function handlePointerDown(e: PointerEvent) {
 		canvas.setPointerCapture(e.pointerId);
 		isDrawing = true;
 		currentPoints = [getCanvasPoint(canvas, e)];
+	}
+
+	function handlePointerMove(e: PointerEvent) {
+		if (!isDrawing) return;
+		const pt = getCanvasPoint(canvas, e);
+		currentPoints = [...currentPoints, pt];
+
+		const preview: Stroke = {
+			id: 'preview',
+			points: currentPoints,
+			color,
+			width: brushSize
+		};
+		let current: Stroke[] = [];
+		const unsub = history.strokes.subscribe((s) => (current = s));
+		unsub();
+		redrawAll(ctx!, current);
+		renderStroke(ctx!, preview);
 	}
 
 	function handlePointerUp() {
@@ -29,12 +65,34 @@
 		}
 		isDrawing = false;
 
+		const stroke: Stroke = {
+			id: generateId(),
+			points: currentPoints,
+			color,
+			width: brushSize
+		};
+
+		history.addStroke(stroke);
 		currentPoints = [];
 	}
+	function resizeCanvas() {
+		if (!canvas) return;
 
-	onMount(() => {
-		ctx = canvas.getContext('2d');
-	});
+		const dpr = window.devicePixelRatio || 1;
+		const rect = canvas.getBoundingClientRect();
+
+		canvas.width = rect.width * dpr;
+		canvas.height = rect.height * dpr;
+
+		ctx?.scale(dpr, dpr);
+
+		const strokes = history.strokes;
+		let current: Stroke[] = [];
+		const unsub = strokes.subscribe((s) => (current = s));
+
+		unsub();
+		redrawAll(ctx!, current);
+	}
 </script>
 
 <div>
@@ -55,6 +113,8 @@
 			bind:this={canvas}
 			onpointerdown={handlePointerDown}
 			onpointerup={handlePointerUp}
+			onpointermove={handlePointerMove}
+			onpointerleave={handlePointerUp}
 			class="block h-full w-full cursor-crosshair"
 		></canvas>
 	</div>
@@ -151,7 +211,7 @@
 	.tool-group {
 		display: flex;
 		align-items: center;
-		gap: 2px;
+		gap: 4px;
 	}
 
 	.swatch {

@@ -23,6 +23,17 @@ export function renderStroke(ctx: CanvasRenderingContext2D, stroke: Stroke) {
 
     ctx.beginPath()
     ctx.moveTo(stroke.points[0].x, stroke.points[0].y)
+
+    for (let i = 1; i < stroke.points.length - 1; i++) {
+        const midX = (stroke.points[i].x + stroke.points[i + 1].x) / 2;
+        const midY = (stroke.points[i].y + stroke.points[i + 1].y) / 2;
+        ctx.quadraticCurveTo(stroke.points[i].x, stroke.points[i].y, midX, midY);
+    }
+
+    const last = stroke.points[stroke.points.length - 1];
+    ctx.lineTo(last.x, last.y);
+    ctx.stroke();
+    ctx.restore();
 }
 
 
