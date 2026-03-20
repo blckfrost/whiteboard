@@ -46,13 +46,8 @@ export function createPartyClient({ room, userId, onStroke, onCursor }: PartyCli
         if (!event.data.trim()) return
 
         try {
-            const jsonStart = event.data.indexOf('{')
-            if (jsonStart === -1) return
-
-            const json = event.data.slice(jsonStart)
-
-
-            const message: PartyMessage = JSON.parse(json)
+            // const message: PartyMessage = JSON.parse(json)
+            const message: PartyMessage = JSON.parse(event.data);
             if (message.type === 'stroke') onStroke(message.stroke);
             if (message.type === 'cursor') onCursor(message)
         } catch (e) {
