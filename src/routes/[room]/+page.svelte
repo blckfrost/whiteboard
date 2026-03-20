@@ -162,6 +162,7 @@
 						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 							<path d="M3 2L13 8L8 9L6 14L3 2Z" fill="#60a5fa" stroke="#0a0a0b" stroke-width="1" />
 						</svg>
+						<span class="text-white">{userId}</span>
 					</div>
 				{/if}
 			{/each}
@@ -237,8 +238,6 @@
 			{/each}
 		</div>
 	</div>
-
-	<div></div>
 </div>
 
 <style>
