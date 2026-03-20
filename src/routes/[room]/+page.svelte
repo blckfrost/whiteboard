@@ -7,15 +7,15 @@
 	import type { Point, Stroke } from '../../types';
 	import { history } from '$lib/history';
 
-	const room = $page.params.room;
+	const room = $derived($page.params.room);
 
 	let canvas: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D | null;
 	let isDrawing = false;
 	let currentPoints: Point[] = [];
 
-	let color = '#c8f04a';
-	let brushSize = 3;
+	let color = $state('#c8f04a');
+	let brushSize = $state(2);
 	const palette = ['#c8f04a', '#f0ede6', '#60a5fa', '#f87171', '#fb923c', '#a78bfa', '#34d399'];
 
 	let unsubStrokes = history.strokes.subscribe((strokes) => {
@@ -115,7 +115,7 @@
 			onpointerup={handlePointerUp}
 			onpointermove={handlePointerMove}
 			onpointerleave={handlePointerUp}
-			class="block h-full w-full cursor-crosshair"
+			class="h-full w-full cursor-crosshair"
 		></canvas>
 	</div>
 
@@ -167,6 +167,23 @@
 					onclick={() => (color = c)}
 					title={c}
 				>
+				</button>
+			{/each}
+		</div>
+
+		<Divider />
+		<div class="tool-group">
+			{#each [2, 4, 6, 8, 10] as size (size)}
+				<button
+					class="flex h-9 w-9 items-center justify-center rounded-lg bg-transparent"
+					class:active={brushSize === size}
+					onclick={() => (brushSize = size)}
+					title={`${size}px`}
+				>
+					<span
+						style="width:{size * 1.4}px; height:{size *
+							1.4}px; background:{color}; border-radius:50%; display:block; transition: background 0.15s;"
+					></span>
 				</button>
 			{/each}
 		</div>

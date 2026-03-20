@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let roomInput = $state('');
 
 	function join() {
 		const slug = roomInput.trim().toLowerCase() || randomRoom();
-		goto(`${slug}`);
+		goto(resolve(`/${slug}`));
 	}
 
 	function randomRoom() {
