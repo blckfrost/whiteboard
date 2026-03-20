@@ -6,13 +6,21 @@
 	import Divider from '$lib/components/divider.svelte';
 	import type { Point, Stroke } from '../../types';
 	import { history } from '$lib/history';
+	import { createPartyClient, type RemoteCursor } from '$lib/party';
+	import { SvelteMap } from 'svelte/reactivity';
 
 	const room = $derived($page.params.room);
+	const userId = generateId();
 
 	let canvas: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D | null;
 	let isDrawing = false;
 	let currentPoints: Point[] = [];
+
+	let party: ReturnType<typeof createPartyClient> | null = null;
+
+	let remoteCursors: Map<string, RemoteCursor> = new SvelteMap();
+	let cursorsUpdate = $state(0);
 
 	let color = $state('#c8f04a');
 	let brushSize = $state(2);
@@ -26,10 +34,23 @@
 		ctx = canvas.getContext('2d');
 		resizeCanvas();
 
+		if (!room) return;
+
+		party = createPartyClient({
+			room,
+			userId,
+			onStroke: (stroke) => history.addRemoteStroke(stroke),
+			onCursor: (cursor) => {
+				remoteCursors.set(cursor.userId, cursor);
+				cursorsUpdate++;
+			}
+		});
+
 		window.addEventListener('resize', resizeCanvas);
 	});
 
 	onDestroy(() => {
+		party?.destroy();
 		unsubStrokes();
 		window.removeEventListener('resize', resizeCanvas);
 	});
@@ -41,8 +62,12 @@
 	}
 
 	function handlePointerMove(e: PointerEvent) {
-		if (!isDrawing) return;
 		const pt = getCanvasPoint(canvas, e);
+
+		party?.sendCursor(pt.x, pt.y);
+
+		if (!isDrawing) return;
+
 		currentPoints = [...currentPoints, pt];
 
 		const preview: Stroke = {
@@ -51,6 +76,7 @@
 			color,
 			width: brushSize
 		};
+
 		let current: Stroke[] = [];
 		const unsub = history.strokes.subscribe((s) => (current = s));
 		unsub();
@@ -69,10 +95,12 @@
 			id: generateId(),
 			points: currentPoints,
 			color,
-			width: brushSize
+			width: brushSize,
+			userId
 		};
 
 		history.addStroke(stroke);
+		party?.sendStroke(stroke);
 		currentPoints = [];
 	}
 	function resizeCanvas() {
@@ -93,6 +121,10 @@
 		unsub();
 		redrawAll(ctx!, current);
 	}
+
+	function copyLink() {
+		navigator.clipboard.writeText(window.location.href);
+	}
 </script>
 
 <div>
@@ -107,6 +139,11 @@
 		<div class="ml-auto rounded-md border border-neutral-600 bg-emerald-800 px-2 py-1">
 			<span class="text-[12px] text-neutral-200">{room}</span>
 		</div>
+
+		<button
+			class="cursor-pointer rounded-md border bg-transparent px-3 py-1 text-neutral-400"
+			onclick={copyLink}>Copy invite link</button
+		>
 	</header>
 	<div class="canvas-wrap">
 		<canvas
@@ -117,6 +154,18 @@
 			onpointerleave={handlePointerUp}
 			class="h-full w-full cursor-crosshair"
 		></canvas>
+
+		{#key cursorsUpdate}
+			{#each [...remoteCursors.values()] as cursor (cursor.userId)}
+				{#if cursor.userId !== userId}
+					<div class="pointer-events-none absolute" style="left:{cursor.x}px; top:{cursor.y}px;">
+						<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+							<path d="M3 2L13 8L8 9L6 14L3 2Z" fill="#60a5fa" stroke="#0a0a0b" stroke-width="1" />
+						</svg>
+					</div>
+				{/if}
+			{/each}
+		{/key}
 	</div>
 
 	<div class="flex h-8 shrink-0 items-center gap-1 border-t bg-emerald-600 px-4">

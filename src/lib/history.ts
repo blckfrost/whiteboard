@@ -9,7 +9,11 @@ function createHistory() {
 
     }
 
-    return { strokes, addStroke }
+    function addRemoteStroke(stroke: Stroke) {
+        strokes.update((s) => [...s, stroke])
+    }
+
+    return { strokes, addStroke, addRemoteStroke }
 
 }
 

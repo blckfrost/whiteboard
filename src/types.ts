@@ -8,4 +8,5 @@ export interface Stroke {
     points: Point[];
     color: string;
     width: number;
+    userId?: string;
 }

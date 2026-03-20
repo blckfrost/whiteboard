@@ -22,10 +22,24 @@ interface PartyClientOptions {
 }
 
 export function createPartyClient({ room, userId, onStroke, onCursor }: PartyClientOptions) {
+    if (!room) {
+        throw new Error("createPartyClient: `room is required`")
+    }
 
     const host = import.meta.env.VITE_PARTYKIT_HOST ?? 'localhost:1999';
-
     const socket = new PartySocket({ host, room, query: { userId } })
+
+    socket.addEventListener('open', () => {
+        console.log('[party] connected')
+    })
+
+    socket.addEventListener('error', () => {
+        console.log('[party] socket error')
+    })
+
+    socket.addEventListener('close', () => {
+        console.log('[party] socket closed')
+    })
 
     socket.addEventListener('message', (event) => {
         try {
@@ -35,17 +49,30 @@ export function createPartyClient({ room, userId, onStroke, onCursor }: PartyCli
         } catch (e) {
             console.error('Failed to send party message', e)
         }
-
-
     })
 
+    function send(payload: PartyMessage) {
+        if (socket.readyState !== WebSocket.OPEN) {
+            console.warn('[]', {
+                readyState: socket.readyState,
+                payloadType: payload.type
+            })
+            return
+        }
+        socket.send(JSON.stringify(payload))
+    }
+
     function sendStroke(stroke: Stroke) {
-        socket.send(JSON.stringify({ type: 'stroke', stroke } satisfies PartyMessage));
+        send({ type: 'stroke', stroke })
     }
 
     function sendCursor(x: number, y: number) {
-        socket.send(JSON.stringify({ type: 'cursor', userId, x, y } satisfies PartyMessage));
+        send({ type: 'cursor', userId, x, y })
     }
 
-    return { sendStroke, sendCursor }
+    function destroy() {
+        socket.close()
+    }
+
+    return { sendStroke, sendCursor, destroy }
 }
