@@ -152,7 +152,7 @@
 			onpointerup={handlePointerUp}
 			onpointermove={handlePointerMove}
 			onpointerleave={handlePointerUp}
-			class="h-full w-full cursor-crosshair"
+			class="h-full w-full cursor-crosshair bg-neutral-900"
 		></canvas>
 
 		{#key cursorsUpdate}
@@ -171,7 +171,7 @@
 
 	<div class="flex h-8 shrink-0 items-center gap-1 border-t bg-emerald-600 px-4">
 		<div class="tool-group">
-			<button class="icon-btn" title="Undo">
+			<button class="icon-btn" title="Undo" onclick={history.undo}>
 				<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 					<path
 						d="M3 7H10C11.7 7 13 8.3 13 10S11.7 13 10 13H7"
@@ -188,7 +188,7 @@
 					/>
 				</svg>
 			</button>
-			<button class="icon-btn" title="Redo">
+			<button class="icon-btn" title="Redo" onclick={history.redo}>
 				<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 					<path
 						d="M13 7H6C4.3 7 3 8.3 3 10S4.3 13 6 13H9"
@@ -251,10 +251,6 @@
 		position: relative;
 		overflow: hidden;
 		background: #0a0a0b;
-		background-image:
-			linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-		background-size: 32px 32px;
 	}
 
 	.icon-btn {
