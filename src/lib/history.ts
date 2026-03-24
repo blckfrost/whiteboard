@@ -7,6 +7,7 @@ function createHistory() {
 
     function addStroke(stroke: Stroke) {
         strokes.update((s) => [...s, stroke])
+        redoStack.update((s) => [...s, stroke])
     }
 
     function addRemoteStroke(stroke: Stroke) {

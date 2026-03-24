@@ -261,7 +261,7 @@
 		height: 36px;
 		border-radius: 8px;
 		border: none;
-		background: transparent;
+		background: white;
 		color: #666;
 		cursor: pointer;
 		transition:

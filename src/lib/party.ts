@@ -26,7 +26,7 @@ export function createPartyClient({ room, userId, onStroke, onCursor }: PartyCli
         throw new Error("createPartyClient: `room is required`")
     }
 
-    const host = import.meta.env.VITE_PARTYKIT_HOST ?? 'localhost:1999';
+    const host = import.meta.env.VITE_PARTYKIT_HOST;
     const socket = new PartySocket({ host, room, query: { userId } })
 
     socket.addEventListener('open', () => {
