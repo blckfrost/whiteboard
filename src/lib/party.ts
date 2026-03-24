@@ -19,9 +19,10 @@ interface PartyClientOptions {
     userId: string;
     onStroke: (stroke: Stroke) => void;
     onCursor: (cursor: RemoteCursor) => void;
+    onUndo: (strokeId: string) => void
 }
 
-export function createPartyClient({ room, userId, onStroke, onCursor }: PartyClientOptions) {
+export function createPartyClient({ room, userId, onStroke, onCursor, onUndo }: PartyClientOptions) {
     if (!room) {
         throw new Error("createPartyClient: `room is required`")
     }
@@ -50,6 +51,7 @@ export function createPartyClient({ room, userId, onStroke, onCursor }: PartyCli
             const message: PartyMessage = JSON.parse(event.data);
             if (message.type === 'stroke') onStroke(message.stroke);
             if (message.type === 'cursor') onCursor(message)
+            if (message.type === 'undo') onUndo(message.strokeId)
         } catch (e) {
             console.error('[party] Failed to parse incoming message', event.data, e)
         }
@@ -78,5 +80,9 @@ export function createPartyClient({ room, userId, onStroke, onCursor }: PartyCli
         socket.close()
     }
 
-    return { sendStroke, sendCursor, destroy }
+    function sendUndo(strokeId: string) {
+        send({ type: 'undo', strokeId })
+    }
+
+    return { sendStroke, sendCursor, destroy, sendUndo }
 }

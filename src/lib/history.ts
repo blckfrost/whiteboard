@@ -46,7 +46,11 @@ function createHistory() {
         return redone
     }
 
-    return { strokes, addStroke, addRemoteStroke, undo, redo }
+    function removeStroke(id: string) {
+        strokes.update((s) => s.filter((stroke) => stroke.id !== id))
+    }
+
+    return { strokes, redoStack, addStroke, addRemoteStroke, undo, redo, removeStroke }
 
 }
 

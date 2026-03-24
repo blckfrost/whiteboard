@@ -44,7 +44,9 @@
 			onCursor: (cursor) => {
 				remoteCursors.set(cursor.userId, cursor);
 				cursorsUpdate++;
-			}
+			},
+
+			onUndo: (strokeId) => history.removeStroke(strokeId)
 		});
 
 		window.addEventListener('resize', resizeCanvas);
@@ -123,11 +125,19 @@
 		redrawAll(ctx!, current);
 	}
 
+	function undo() {
+		const undone = history.undo();
+		if (undone) party?.sendUndo(undone.id);
+	}
+
 	function copyLink() {
 		navigator.clipboard.writeText(window.location.href);
 		copied = true;
 		setTimeout(() => (copied = false), 2000);
 	}
+
+	let canUndo = $derived(history.strokes.subscribe((strokes) => strokes.length > 0));
+	let canRedo = $derived(history.redoStack.subscribe((redoStack) => redoStack.length > 0));
 </script>
 
 <div class="w-scren flex h-dvh w-screen flex-col overflow-hidden bg-neutral-950">
@@ -220,7 +230,8 @@
 					       bg-transparent text-neutral-500 transition-all hover:bg-white/[0.07] hover:text-neutral-200
 					       active:bg-white/10 active:text-white"
 					title="Undo"
-					onclick={history.undo}
+					onclick={undo}
+					disabled={!canUndo}
 				>
 					<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 						<path
@@ -242,6 +253,7 @@
 				<button
 					title="Redo"
 					onclick={history.redo}
+					disabled={!canRedo}
 					class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border-none
 				       bg-transparent text-neutral-500 transition-all hover:bg-white/[0.07] hover:text-neutral-200
 				       active:bg-white/10 active:text-white"
