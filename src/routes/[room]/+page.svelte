@@ -130,6 +130,10 @@
 		if (undone) party?.sendUndo(undone.id);
 	}
 
+	function redo() {
+		history.redo();
+	}
+
 	function copyLink() {
 		navigator.clipboard.writeText(window.location.href);
 		copied = true;
@@ -252,7 +256,7 @@
 
 				<button
 					title="Redo"
-					onclick={history.redo}
+					onclick={redo}
 					disabled={!canRedo}
 					class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border-none
 				       bg-transparent text-neutral-500 transition-all hover:bg-white/[0.07] hover:text-neutral-200
